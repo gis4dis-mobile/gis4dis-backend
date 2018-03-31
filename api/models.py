@@ -1,9 +1,10 @@
 from django.db import models
 from django.contrib.gis.db import models as gismodels
+from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import User
 from ckeditor_uploader.fields import RichTextUploadingField
 
-# Create your models here
+
 class Category(models.Model):
     name = models.CharField(max_length=255)
 
@@ -41,7 +42,7 @@ class PhenomenonParameterValue(models.Model):
 class PhenomenonPhoto(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     parameter = models.ForeignKey(PhenomenonParameterValue, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='photos', max_length=255, blank=True, null=True)
+    image = models.ImageField(upload_to='photos', max_length=255, blank=True)
 
 
 class MetadataObservation(models.Model):
@@ -64,11 +65,15 @@ class Dictionary(models.Model):
 class Help(models.Model):
     phenomenon = models.ForeignKey(Phenomenon, on_delete=models.CASCADE, related_name='help')
     name = models.CharField(max_length=255)
-    #text = models.TextField(max_length=4096)
     text = RichTextUploadingField()
 
     def __str__(self):
         return self.name
+
+
+class Localization(models.Model):
+    language = models.CharField(max_length=3)
+    dictionary = JSONField()
 
 
 class UserProfile(models.Model):
@@ -78,8 +83,8 @@ class UserProfile(models.Model):
         ('3', 'vysokoškolské vzdělání'),
     )
     GENDER = (
-        ('1', 'man'),
-        ('2', 'woman'),
+        ('1', 'male'),
+        ('2', 'female'),
     )
     QUALIFICATION = (
         ('1', 'Geography'),
@@ -92,6 +97,6 @@ class UserProfile(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     age = models.IntegerField()
-    education = models.CharField(max_length=128, choices=EDUCATION)
-    gender = models.CharField(max_length=10, choices=GENDER)
-    qualification = models.CharField(max_length=128, choices=QUALIFICATION)
+    education = models.CharField(max_length=128, choices=EDUCATION, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER, blank=True)
+    qualification = models.CharField(max_length=128, choices=QUALIFICATION, blank=True)

@@ -1,9 +1,9 @@
 from rest_framework import serializers
 from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary, PhenomenonParameterValue, \
-    PhenomenonPhoto, UserProfile
+    PhenomenonPhoto, UserProfile, Localization
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from django.contrib.gis.geos import GEOSGeometry
 from rest.settings import DOMAIN_NAME
+from api.fields import Base64ImageField
 
 
 class PhenomenonParameterValueSerializer(serializers.ModelSerializer):
@@ -16,21 +16,23 @@ class PhenomenonParameterValueSerializer(serializers.ModelSerializer):
 
 
 class PhenomenonPhotoSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(max_length=None, use_url=True)
+
     class Meta:
         model = PhenomenonPhoto
         fields = ('id', 'owner', 'parameter', 'image')
 
-    def to_representation(self, instance):
+    '''def to_representation(self, instance):
         representation = super(PhenomenonPhotoSerializer, self).to_representation(instance)
         full_path = DOMAIN_NAME + instance.image.url
         representation['image'] = full_path
-        return representation
+        return representation'''
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ('user', 'first_name', 'last_name', 'age', 'education')
+        fields = ('user', 'first_name', 'last_name', 'age', 'education', 'gender', 'qualification')
 
     def create(self, validated_data):
         profile, created = UserProfile.objects.update_or_create(
@@ -39,6 +41,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
                       'first_name': validated_data.get('first_name', None),
                       'last_name': validated_data.get('last_name', None),
                       'education': validated_data.get('education', None),
+                      'gender': validated_data.get('gender', None),
+                      'qualification': validated_data.get('qualification', None),
                       'age': validated_data.get('age', None)})
         return profile
 
@@ -68,25 +72,6 @@ class MetadataObservationSerializer(GeoFeatureModelSerializer):
             observation.values.add(parameter)
         return observation
 
-    # def save(self, data):
-    #     """
-    #     create and return a new Observation instance, given the validated data
-    #     :param validated_data:
-    #     :return: MetadataObservation instance
-    #     """
-    #     print(data)
-    #     type = Parameter.objects.get(name='Type of tree')
-    #     height = Parameter.objects.get(name='Tree height')
-    #     diameter = Parameter.objects.get(name='Trunk diameter')
-    #     location = Parameter.objects.get(name='Type of location')
-    #     phenomenon = Phenomenon.objects.get(name='Dry vegetation (trees)')
-    #     observation = MetadataObservation.objects.create(geometry=GEOSGeometry('POINT('+data['longitude']+' '+data['latitude']+')'))
-    #     observation.values.add(PhenomenonParameterValue.objects.create(phenomenon=phenomenon, parameter=type, value=data['tree-type']))
-    #     observation.values.add(PhenomenonParameterValue.objects.create(phenomenon=phenomenon, parameter=height, value=data['tree-height']))
-    #     observation.values.add(PhenomenonParameterValue.objects.create(phenomenon=phenomenon, parameter=diameter, value=data['trunk-diameter']))
-    #     observation.values.add(PhenomenonParameterValue.objects.create(phenomenon=phenomenon, parameter=location, value=data['location']))
-    #     return observation
-
 
 class HelpSerializer(serializers.ModelSerializer):
     class Meta:
@@ -108,7 +93,16 @@ class ParameterSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'type', 'options', 'element')
 
 
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Localization
+        fields = ('id', 'language', 'dictionary')
+
+
 class PhenomenonSerializer(serializers.ModelSerializer):
+    """
+    Represents serializer for app configuration with all informations important in app initialization
+    """
     parameters = ParameterSerializer(many=True)
     help = HelpSerializer(many=True)
     category = serializers.SlugRelatedField(read_only=True, slug_field='name')

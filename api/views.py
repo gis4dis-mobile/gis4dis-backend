@@ -6,8 +6,8 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from rest_auth.registration.views import SocialLoginView
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 
-from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile
-from .serializers import MetadataObservationSerializer, PhenomenonSerializer, PhenomenonPhotoSerializer, UserProfileSerializer
+from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile, Localization
+from .serializers import MetadataObservationSerializer, PhenomenonSerializer, PhenomenonPhotoSerializer, UserProfileSerializer, LocationSerializer
 from rest_framework.parsers import JSONParser
 
 from rest_framework.views import APIView
@@ -121,9 +121,19 @@ class PhotoDetail(APIView):
 
 
 class Config(APIView):
+    """
+    Represents configuration view which is used for app initialization
+    """
     def get(self, request, format=None):
         structure = Phenomenon.objects.all()
         serializer = PhenomenonSerializer(structure, many=True)
+        return Response(serializer.data)
+
+
+class LocalizationList(APIView):
+    def get(self, request, format=None):
+        localization = Localization.objects.all()
+        serializer = LocationSerializer(localization, many=True)
         return Response(serializer.data)
 
 
