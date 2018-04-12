@@ -4,15 +4,15 @@ from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from rest.settings import DOMAIN_NAME
 from api.fields import Base64ImageField
+from rest_auth.registration.serializers import SocialLoginSerializer
+from rest_framework.authtoken.models import Token
 
 
-class PhenomenonParameterValueSerializer(serializers.ModelSerializer):
-    parameter = serializers.SlugRelatedField(slug_field='id', queryset=Parameter.objects.all())
-    phenomenon = serializers.SlugRelatedField(slug_field='id', queryset=Phenomenon.objects.all())
-
-    class Meta:
-        model = PhenomenonParameterValue
-        fields = ('id', 'value', 'parameter', 'phenomenon')
+# class TokenSerializer(serializers.ModelSerializer):
+#
+#     class Meta:
+#         model = Token
+#         fields = ('key', 'user')
 
 
 class PhenomenonPhotoSerializer(serializers.ModelSerializer):
@@ -29,12 +29,88 @@ class PhenomenonPhotoSerializer(serializers.ModelSerializer):
         return representation'''
 
 
+class DictionarySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Dictionary
+        fields = ('id', 'value', 'i18n_tag')
+
+
+class DictionaryMetadataObservationSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField('get_value_as_name')
+
+    def get_value_as_name(self, obj):
+        return obj.value
+
+    class Meta:
+        model = Dictionary
+        fields = ('name', 'i18n_tag')
+
+
+class PhenomenonParameterValueSerializerId(serializers.ModelSerializer):
+    parameter = serializers.SlugRelatedField(slug_field='id', queryset=Parameter.objects.all())
+    phenomenon = serializers.SlugRelatedField(slug_field='id', queryset=Phenomenon.objects.all())
+
+    class Meta:
+        model = PhenomenonParameterValue
+        fields = ('id', 'value', 'parameter', 'phenomenon')
+
+
+class ParameterMetadataObservationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Parameter
+        fields = ('name', 'i18n_tag')
+
+
+class PhenomenonMetadataObservationSerializer(serializers.ModelSerializer):
+    """
+    Represents serializer for app configuration with all informations important in app initialization
+    """
+
+    class Meta:
+        model = Phenomenon
+        fields = ('name', 'i18n_tag')
+
+
+class ParameterSerializer(serializers.ModelSerializer):
+    options = DictionarySerializer(many=True)
+
+    class Meta:
+        model = Parameter
+        fields = ('id', 'name', 'i18n_tag', 'type', 'options', 'element')
+
+
+class PhenomenonParameterValueSerializer(serializers.ModelSerializer):
+    parameter = ParameterMetadataObservationSerializer()
+    phenomenon = PhenomenonMetadataObservationSerializer()
+    value = serializers.SerializerMethodField('get_value_i18n_tag')
+
+    def get_value_i18n_tag(self, obj):
+        try:
+            dictionary = Dictionary.objects.get(value=obj.value)
+            obj_serializer = DictionaryMetadataObservationSerializer(dictionary)
+            return obj_serializer.data
+        except Dictionary.DoesNotExist:
+            return obj.value
+
+    class Meta:
+        model = PhenomenonParameterValue
+        fields = ('id', 'phenomenon', 'parameter', 'value')
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    def get_full_name(self, obj):
+        return '{} {}'.format(obj.first_name, obj.last_name)
+
     class Meta:
         model = UserProfile
-        fields = ('user', 'first_name', 'last_name', 'age', 'education', 'gender', 'qualification')
+        fields = ('user', 'full_name', 'first_name', 'last_name', 'age', 'education', 'gender', 'qualification')
 
-    def create(self, validated_data):
+
+def create(self, validated_data):
         profile, created = UserProfile.objects.update_or_create(
             user=validated_data.get('user', None),
             defaults={'user': validated_data.get('user', None),
@@ -47,14 +123,53 @@ class UserProfileSerializer(serializers.ModelSerializer):
         return profile
 
 
-class MetadataObservationSerializer(GeoFeatureModelSerializer):
-    values = PhenomenonParameterValueSerializer(many=True, required=False)
-    date = serializers.DateField(input_formats=(['%d-%m-%Y', 'iso-8601']))
+class MetadataObservationSerializerId(GeoFeatureModelSerializer):
+    values = PhenomenonParameterValueSerializerId(many=True, required=False)
+    observation_date = serializers.DateTimeField()
+    user = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
 
     class Meta:
         model = MetadataObservation
         geo_field = 'geometry'
-        fields = ('id', 'date', 'observation_time', 'send_date', 'geometry', 'note', 'values')
+        fields = ('id', 'observation_date', 'user', 'send_date', 'geometry', 'note', 'values')
+
+    def create(self, validated_data):
+        """
+        Create and return a new `MetadataObservation` instance, given the validated data.
+        """
+        parameters = validated_data.pop('values')
+        observation = MetadataObservation.objects.create(**validated_data)
+        print(parameters)
+        for parameter in parameters:
+            print(parameter['phenomenon'])
+            parameter = PhenomenonParameterValue.objects.create(phenomenon=parameter['phenomenon'],
+                                                                parameter=parameter['parameter'],
+                                                                value=parameter['value'])
+            print(parameter)
+            observation.values.add(parameter)
+        print('Observation: {}'.format(observation))
+        return observation
+
+
+class MetadataObservationSerializer(GeoFeatureModelSerializer):
+    values = PhenomenonParameterValueSerializer(many=True, required=False)
+    observation_date = serializers.DateTimeField()
+    user_fullname = serializers.SerializerMethodField('get_user_profile')
+    photos = PhenomenonPhotoSerializer(many=True, required=False)
+
+    def get_user_profile(self, obj):
+        try:
+            profile = UserProfile.objects.get(user=obj.user)
+            #obj_serializer = UserProfileSerializer(profile)
+            #return obj_serializer.data
+            return profile.__str__()
+        except:
+            return None
+
+    class Meta:
+        model = MetadataObservation
+        geo_field = 'geometry'
+        fields = ('id', 'user_fullname', 'observation_date', 'send_date', 'geometry', 'note', 'photos', 'values')
 
     def create(self, validated_data):
         """
@@ -73,30 +188,18 @@ class MetadataObservationSerializer(GeoFeatureModelSerializer):
         return observation
 
 
+# class HelpLocalizationSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = HelpLocalization
+#         fields = ('language', 'name', 'text')
+
+
 class HelpSerializer(serializers.ModelSerializer):
+    # localization = HelpLocalizationSerializer(many=True)
+
     class Meta:
         model = Help
-        fields = ('name', 'text',)
-
-
-class DictionarySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dictionary
-        fields = ('id', 'value')
-
-
-class ParameterSerializer(serializers.ModelSerializer):
-    options = DictionarySerializer(many=True)
-
-    class Meta:
-        model = Parameter
-        fields = ('id', 'name', 'type', 'options', 'element')
-
-
-class LocationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Localization
-        fields = ('id', 'language', 'dictionary')
+        fields = ('text', 'i18n_tag')
 
 
 class PhenomenonSerializer(serializers.ModelSerializer):
@@ -105,8 +208,12 @@ class PhenomenonSerializer(serializers.ModelSerializer):
     """
     parameters = ParameterSerializer(many=True)
     help = HelpSerializer(many=True)
-    category = serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
         model = Phenomenon
-        fields = ('name', 'category', 'parameters', 'category', 'help')
+        fields = ('id', 'name', 'i18n_tag', 'parameters', 'help')
+
+
+class LocalizationSerializer(serializers.Serializer):
+    phenomenon = PhenomenonSerializer()
+    parameters = ParameterSerializer()

@@ -15,12 +15,13 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
-from api.views import FacebookLogin, GoogleLogin
+from api.views import FacebookLogin, GoogleLogin#, UserLoginView
 from django.views.generic import TemplateView
 from django.conf.urls.static import static
 from rest import settings
 
 urlpatterns = [
+    #url(r'^rest/rest-auth/login', UserLoginView.as_view(), name='login'),
     url(r'^rest/rest-auth/', include('rest_auth.urls')),
     url(r'^rest/rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest/rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
@@ -29,7 +30,7 @@ urlpatterns = [
     url(r'^rest/api/', include('api.urls', namespace='api')),
     url(r'^rest/admin/', admin.site.urls),
     url(r'^rest/password-reset/confirm/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
-        TemplateView.as_view(template_name="password_reset_confirm.html"), name='password_reset_confirm'),
+        TemplateView.as_view(template_name="registration/password_reset_confirm.html"), name='password_reset_confirm'),
     url(r'^rest/ckeditor/', include('ckeditor_uploader.urls')),
 ]
 
