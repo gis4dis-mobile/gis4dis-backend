@@ -20,7 +20,7 @@ class PhenomenonPhotoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PhenomenonPhoto
-        fields = ('id', 'owner', 'parameter', 'image')
+        fields = ('id', 'parameter', 'owner', 'image', 'observation')
 
     '''def to_representation(self, instance):
         representation = super(PhenomenonPhotoSerializer, self).to_representation(instance)

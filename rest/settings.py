@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = ''
+SECRET_KEY = '#ft@64$8ojqr6uxn$$+*!y-_i#401c%3t@ut^^!5)(m*8-sk3#'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -119,7 +119,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'rest',
         'USER': 'rest',
-        'PASSWORD': '',
+        'PASSWORD': 'f6t8SZcL',
         'HOST': 'localhost',
         'PORT': '5432',
     }
@@ -157,6 +157,9 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20000000
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20000000
 
 
 # Static files (CSS, JavaScript, Images)

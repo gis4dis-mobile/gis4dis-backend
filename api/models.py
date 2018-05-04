@@ -29,7 +29,7 @@ class Category(models.Model):
 
 class Phenomenon(models.Model):
     name = models.CharField(max_length=255)
-    i18n_tag = models.CharField(max_length=512)
+    i18n_tag = models.CharField(max_length=512, unique=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category')
 
     def __str__(self):
@@ -50,7 +50,7 @@ class PhenomenonLocalization(models.Model):
 
 class Parameter(models.Model):
     name = models.CharField(max_length=255)
-    i18n_tag = models.CharField(max_length=512)
+    i18n_tag = models.CharField(max_length=512, unique=True)
     phenomenon = models.ForeignKey(Phenomenon, on_delete=models.CASCADE, related_name='parameters')
     type = models.CharField(max_length=255)
     element = models.CharField(max_length=255)
@@ -104,7 +104,7 @@ class MetadataObservation(models.Model):
 
 class Dictionary(models.Model):
     value = models.CharField(max_length=255)
-    i18n_tag = models.CharField(max_length=512)
+    i18n_tag = models.CharField(max_length=512, unique=True)
     parameter = models.ForeignKey(Parameter, on_delete=models.CASCADE, related_name='options')
 
     class Meta:
@@ -130,7 +130,7 @@ class Help(models.Model):
     phenomenon = models.ForeignKey(Phenomenon, on_delete=models.CASCADE, related_name='help')
     #name = models.CharField(max_length=255)
     text = RichTextUploadingField()
-    i18n_tag = models.CharField(max_length=512)
+    i18n_tag = models.CharField(max_length=512, unique=True)
 
     def __str__(self):
         return self.phenomenon.name
