@@ -1,30 +1,20 @@
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, JsonResponse
-from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
+from django.http import JsonResponse
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-from rest_auth.registration.views import SocialLoginView
-from rest_auth.views import LoginView
+from allauth.socialaccount.providers.facebook.views import FacebookOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-
-from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile, Localization
-from .serializers import MetadataObservationSerializer, MetadataObservationSerializerId, PhenomenonSerializer, PhenomenonPhotoSerializer, UserProfileSerializer, LocalizationSerializer
-from rest_framework.parsers import JSONParser
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import authentication_classes, permission_classes
-
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.permissions import IsAuthenticated
-from django.http import Http404
-from rest_framework.pagination import PageNumberPagination
 from django.contrib.gis.geos import Polygon, Point
 from django.contrib.gis.measure import Distance
-from django.conf import settings
-from rest_framework import serializers
+from django.http import Http404
+from django.http import JsonResponse
+from rest_auth.registration.views import SocialLoginView
+from rest_framework import status
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile, Localization, Version
+from .serializers import MetadataObservationSerializer, MetadataObservationSerializerId, PhenomenonSerializer, \
+    PhenomenonPhotoSerializer, UserProfileSerializer, VersionSerializer
 
 
 #@authentication_classes((TokenAuthentication,))
@@ -112,6 +102,19 @@ class PhotoList(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class VersionDetail(APIView):
+    def get(self, request, format=None):
+        name = self.request.query_params.get('name', None)
+
+        if name:
+            version = Version.objects.filter(name=name)
+        else:
+            version = Version.objects.all()
+
+        serializer = VersionSerializer(version, many=True)
+        return Response(serializer.data)
+
+
 class PhotoDetail(APIView):
     def get_object(self, pk):
         try:
@@ -142,85 +145,43 @@ class Config(APIView):
 
 class LocalizationList(APIView):
     def get(self, request, format=None):
-        phenomenon_id = self.request.query_params.get('phenomenon', None)
-        lang = self.request.query_params.get('lang', None)
 
         response_data = []
 
-        if phenomenon_id:
-            if lang:
-                phenomenon = Phenomenon.objects.select_related().get(pk=phenomenon_id)
-            else:
-                try:
-                    phenomenon = Phenomenon.objects.select_related().get(pk=phenomenon_id)
-                except Phenomenon.DoesNotExist:
-                    return JsonResponse({'error': 'Phenomenon does not exist'}, safe=False)
+        phenomenons = Phenomenon.objects.select_related().all()
 
-                phenomenon_data = {}
+        for phenomenon in phenomenons:
 
-                for phenomenon_localization in phenomenon.localization.all():
-                    phenomenon_data[phenomenon_localization.language] = {}
-                    phenomenon_data[phenomenon_localization.language][
-                        phenomenon.i18n_tag] = phenomenon_localization.name
+            phenomenon_data = {}
 
-                parameters = phenomenon.parameters.all()
+            for phenomenon_localization in phenomenon.localization.all():
+                phenomenon_data[phenomenon_localization.language] = {}
+                phenomenon_data[phenomenon_localization.language][phenomenon.i18n_tag] = phenomenon_localization.name
 
-                for parameter in parameters:
+            phenomenon_data['version'] = Version.objects.get(name='localization').version
 
-                    for parameter_localization in parameter.localization.all():
-                        phenomenon_data[parameter_localization.language][
-                            parameter.i18n_tag] = parameter_localization.name
+            parameters = phenomenon.parameters.all()
 
-                    dictionaries = parameter.options.all()
+            for parameter in parameters:
 
-                    for dictionary in dictionaries:
+                for parameter_localization in parameter.localization.all():
+                    phenomenon_data[parameter_localization.language][parameter.i18n_tag] = parameter_localization.name
 
-                        for dictionary_localization in dictionary.localization.all():
-                            phenomenon_data[dictionary_localization.language][
-                                dictionary.i18n_tag] = dictionary_localization.name
+                dictionaries = parameter.options.all()
 
-                    helps = phenomenon.help.all()
+                for dictionary in dictionaries:
 
-                    for help in helps:
+                    for dictionary_localization in dictionary.localization.all():
+                        phenomenon_data[dictionary_localization.language][dictionary.i18n_tag] = dictionary_localization.name
 
-                        for help_localization in help.localization.all():
-                            phenomenon_data[help_localization.language][help.i18n_tag] = help_localization.text
+                helps = phenomenon.help.all()
 
-                response_data.append(phenomenon_data)
+                for help in helps:
 
-        else:
-            phenomenons = Phenomenon.objects.select_related().all()
+                    for help_localization in help.localization.all():
+                        phenomenon_data[help_localization.language][help.i18n_tag] = help_localization.text
 
-            for phenomenon in phenomenons:
-
-                phenomenon_data = {}
-
-                for phenomenon_localization in phenomenon.localization.all():
-                    phenomenon_data[phenomenon_localization.language] = {}
-                    phenomenon_data[phenomenon_localization.language][phenomenon.i18n_tag] = phenomenon_localization.name
-
-                parameters = phenomenon.parameters.all()
-
-                for parameter in parameters:
-
-                    for parameter_localization in parameter.localization.all():
-                        phenomenon_data[parameter_localization.language][parameter.i18n_tag] = parameter_localization.name
-
-                    dictionaries = parameter.options.all()
-
-                    for dictionary in dictionaries:
-
-                        for dictionary_localization in dictionary.localization.all():
-                            phenomenon_data[dictionary_localization.language][dictionary.i18n_tag] = dictionary_localization.name
-
-                    helps = phenomenon.help.all()
-
-                    for help in helps:
-
-                        for help_localization in help.localization.all():
-                            phenomenon_data[help_localization.language][help.i18n_tag] = help_localization.text
-
-                response_data.append(phenomenon_data)
+            response_data.append(phenomenon_data)
 
         app_localizations = Localization.objects.all()
         app_data = {}
@@ -229,27 +190,6 @@ class LocalizationList(APIView):
         response_data.append(app_data)
 
         return JsonResponse(response_data, safe=False)
-
-
-# class UserLoginView(LoginView):
-#
-#     def get_response(self):
-#         serializer_class = self.get_response_serializer()
-#
-#         if getattr(settings, 'REST_USE_JWT', False):
-#             data = {
-#                 'user': self.user,
-#                 'token': self.token
-#             }
-#             serializer = serializer_class(instance=data,
-#                                           context={'request': self.request})
-#             user_dict = serializer.data
-#         else:
-#             serializer = serializer_class(instance=self.token,
-#                                           context={'request': self.request})
-#             user_dict = {'user_id': self.request.user.id}
-#             user_dict.update(serializer.data)
-#         return Response(user_dict, status=status.HTTP_200_OK)
 
 
 class FacebookLogin(SocialLoginView):

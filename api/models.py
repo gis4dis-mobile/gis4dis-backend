@@ -157,6 +157,14 @@ class Localization(models.Model):
         return self.language
 
 
+class Version(models.Model):
+    name = models.CharField(max_length=50)
+    version = models.CharField(max_length=5)
+
+    def __str__(self):
+        return self.name
+
+
 class UserProfile(models.Model):
     EDUCATION = (
         ('1', 'základní vzdělání'),

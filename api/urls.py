@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^photos/(?P<pk>[0-9]+)/$', views.PhotoDetail.as_view()),
     url(r'^config/$', views.Config.as_view()),
     url(r'^localization/$', views.LocalizationList.as_view()),
+    url(r'^version/$', views.VersionDetail.as_view()),
 ]
 
 # TODO dont forget set serving photos via NGINX in production mode

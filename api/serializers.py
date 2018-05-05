@@ -1,11 +1,9 @@
 from rest_framework import serializers
-from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary, PhenomenonParameterValue, \
-    PhenomenonPhoto, UserProfile, Localization
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
-from rest.settings import DOMAIN_NAME
+
 from api.fields import Base64ImageField
-from rest_auth.registration.serializers import SocialLoginSerializer
-from rest_framework.authtoken.models import Token
+from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary, PhenomenonParameterValue, \
+    PhenomenonPhoto, UserProfile, Version
 
 
 # class TokenSerializer(serializers.ModelSerializer):
@@ -160,8 +158,6 @@ class MetadataObservationSerializer(GeoFeatureModelSerializer):
     def get_user_profile(self, obj):
         try:
             profile = UserProfile.objects.get(user=obj.user)
-            #obj_serializer = UserProfileSerializer(profile)
-            #return obj_serializer.data
             return profile.__str__()
         except:
             return None
@@ -188,14 +184,7 @@ class MetadataObservationSerializer(GeoFeatureModelSerializer):
         return observation
 
 
-# class HelpLocalizationSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = HelpLocalization
-#         fields = ('language', 'name', 'text')
-
-
 class HelpSerializer(serializers.ModelSerializer):
-    # localization = HelpLocalizationSerializer(many=True)
 
     class Meta:
         model = Help
@@ -208,12 +197,27 @@ class PhenomenonSerializer(serializers.ModelSerializer):
     """
     parameters = ParameterSerializer(many=True)
     help = HelpSerializer(many=True)
+    version = serializers.SerializerMethodField('get_config_version')
+
+    def get_config_version(self, obj):
+        try:
+            version = Version.objects.get(name='config')
+            return version.version
+        except:
+            return None
 
     class Meta:
         model = Phenomenon
-        fields = ('id', 'name', 'i18n_tag', 'parameters', 'help')
+        fields = ('id', 'version', 'name', 'i18n_tag', 'parameters', 'help')
 
 
 class LocalizationSerializer(serializers.Serializer):
     phenomenon = PhenomenonSerializer()
     parameters = ParameterSerializer()
+
+
+class VersionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Version
+        fields = ('version',)
