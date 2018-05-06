@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from rest_auth.models import TokenModel
+from django.contrib.auth.models import User
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 
 from api.fields import Base64ImageField
@@ -6,11 +8,18 @@ from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary
     PhenomenonPhoto, UserProfile, Version
 
 
-# class TokenSerializer(serializers.ModelSerializer):
-#
-#     class Meta:
-#         model = Token
-#         fields = ('key', 'user')
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email')
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = TokenModel
+        fields = ('key', 'user')
 
 
 class PhenomenonPhotoSerializer(serializers.ModelSerializer):

@@ -89,9 +89,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 200
 }
 
-#REST_AUTH_SERIALIZERS = {
-#    'TOKEN_SERIALIZER': 'api.serializers.TokenSerializer',
-#}
+REST_AUTH_SERIALIZERS = {
+    'TOKEN_SERIALIZER': 'api.serializers.TokenSerializer',
+}
 
 TEMPLATES = [
     {
