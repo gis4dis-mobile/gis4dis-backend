@@ -172,17 +172,16 @@ class UserProfile(models.Model):
         ('3', 'vysokoškolské vzdělání'),
     )
     GENDER = (
-        ('1', 'male'),
-        ('2', 'female'),
+        ('1', 'muž'),
+        ('2', 'žena'),
     )
     QUALIFICATION = (
-        ('1', 'Geography'),
-        ('2', 'GIS and cartography'),
-        ('3', 'Environmental'),
-        ('4', 'Other'),
+        ('1', 'Geografie'),
+        ('2', 'GIS a kartografie'),
+        ('3', 'Other'),
     )
 
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     age = models.IntegerField()

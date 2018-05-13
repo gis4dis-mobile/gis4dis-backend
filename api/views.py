@@ -11,6 +11,7 @@ from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.contrib.auth.models import User
 
 from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile, Localization, Version
 from .serializers import MetadataObservationSerializer, MetadataObservationSerializerId, PhenomenonSerializer, \
@@ -77,11 +78,26 @@ class UserProfileUpdate(APIView):
             raise Http404
 
     def put(self, request, format=None):
+        instance = self.get_object(request.data.get('user'))
+        instance.user = User.objects.get(pk=request.data.get('user', None))
+        instance.first_name = request.data.get('first_name', None)
+        instance.last_name = request.data.get('last_name', None)
+        instance.education = request.data.get('education', None)
+        instance.gender = request.data.get('gender', None)
+        instance.qualification = request.data.get('qualification', None)
+        instance.age = request.data.get('age', None)
+        instance.save()
+
         serializer = UserProfileSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=False)
+
+        return Response(serializer.data)
+
+        # serializer = UserProfileSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     serializer.save()
+        #     return Response(serializer.data)
+        # return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 #@authentication_classes((TokenAuthentication,))
@@ -158,7 +174,7 @@ class LocalizationList(APIView):
                 phenomenon_data[phenomenon_localization.language] = {}
                 phenomenon_data[phenomenon_localization.language][phenomenon.i18n_tag] = phenomenon_localization.name
 
-            phenomenon_data['version'] = Version.objects.get(name='localization').version
+            # phenomenon_data['version'] = Version.objects.get(name='localization').version
 
             parameters = phenomenon.parameters.all()
 

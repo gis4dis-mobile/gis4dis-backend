@@ -8,10 +8,35 @@ from .models import MetadataObservation, Help, Phenomenon, Parameter, Dictionary
     PhenomenonPhoto, UserProfile, Version
 
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    def get_full_name(self, obj):
+        return '{} {}'.format(obj.first_name, obj.last_name)
+
+    class Meta:
+        model = UserProfile
+        fields = ('user', 'full_name', 'first_name', 'last_name', 'age', 'education', 'gender', 'qualification')
+
+    def create(self, validated_data):
+        profile, created = UserProfile.objects.update_or_create(
+            user=validated_data.get('user', None),
+            defaults={'user': validated_data.get('user', None),
+                      'first_name': validated_data.get('first_name', None),
+                      'last_name': validated_data.get('last_name', None),
+                      'education': validated_data.get('education', None),
+                      'gender': validated_data.get('gender', None),
+                      'qualification': validated_data.get('qualification', None),
+                      'age': validated_data.get('age', None)})
+        return profile
+
+
 class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer()
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
+        fields = ('id', 'username', 'email', 'profile')
 
 
 class TokenSerializer(serializers.ModelSerializer):
@@ -104,30 +129,6 @@ class PhenomenonParameterValueSerializer(serializers.ModelSerializer):
     class Meta:
         model = PhenomenonParameterValue
         fields = ('id', 'phenomenon', 'parameter', 'value')
-
-
-class UserProfileSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-
-    def get_full_name(self, obj):
-        return '{} {}'.format(obj.first_name, obj.last_name)
-
-    class Meta:
-        model = UserProfile
-        fields = ('user', 'full_name', 'first_name', 'last_name', 'age', 'education', 'gender', 'qualification')
-
-
-def create(self, validated_data):
-        profile, created = UserProfile.objects.update_or_create(
-            user=validated_data.get('user', None),
-            defaults={'user': validated_data.get('user', None),
-                      'first_name': validated_data.get('first_name', None),
-                      'last_name': validated_data.get('last_name', None),
-                      'education': validated_data.get('education', None),
-                      'gender': validated_data.get('gender', None),
-                      'qualification': validated_data.get('qualification', None),
-                      'age': validated_data.get('age', None)})
-        return profile
 
 
 class MetadataObservationSerializerId(GeoFeatureModelSerializer):
