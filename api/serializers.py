@@ -48,6 +48,7 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class PhenomenonPhotoSerializer(serializers.ModelSerializer):
+    owner = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
     image = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
@@ -92,7 +93,7 @@ class ParameterMetadataObservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Parameter
-        fields = ('name', 'i18n_tag')
+        fields = ('id', 'name', 'i18n_tag')
 
 
 class PhenomenonMetadataObservationSerializer(serializers.ModelSerializer):
@@ -102,7 +103,7 @@ class PhenomenonMetadataObservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Phenomenon
-        fields = ('name', 'i18n_tag')
+        fields = ('id', 'name', 'i18n_tag')
 
 
 class ParameterSerializer(serializers.ModelSerializer):
@@ -110,7 +111,7 @@ class ParameterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Parameter
-        fields = ('id', 'name', 'i18n_tag', 'type', 'options', 'element')
+        fields = ('id', 'name', 'i18n_tag', 'type', 'element', 'mandatory', 'options')
 
 
 class PhenomenonParameterValueSerializer(serializers.ModelSerializer):

@@ -54,6 +54,7 @@ class Parameter(models.Model):
     phenomenon = models.ForeignKey(Phenomenon, on_delete=models.CASCADE, related_name='parameters')
     type = models.CharField(max_length=255)
     element = models.CharField(max_length=255)
+    mandatory = models.BooleanField(blank=True, default=False)
 
     def __str__(self):
         return self.name
@@ -184,10 +185,10 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    age = models.IntegerField()
-    education = models.CharField(max_length=128, choices=EDUCATION, blank=True)
-    gender = models.CharField(max_length=10, choices=GENDER, blank=True)
-    qualification = models.CharField(max_length=128, choices=QUALIFICATION, blank=True)
+    age = models.IntegerField(null=True)
+    education = models.CharField(max_length=128, choices=EDUCATION, blank=True, null=True)
+    gender = models.CharField(max_length=10, choices=GENDER, blank=True, null=True)
+    qualification = models.CharField(max_length=128, choices=QUALIFICATION, blank=True, null=True)
 
     def __str__(self):
         return '{} {}'.format(self.first_name, self.last_name)

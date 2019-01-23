@@ -25,6 +25,8 @@ class ObservationList(APIView):
         radius = self.request.query_params.get('radius', None)
         point = self.request.query_params.get('point', None)
         bbox = self.request.query_params.get('bbox', None)
+        from_date = self.request.query_params.get('from', None)
+        to_date = self.request.query_params.get('to', None)
         user = self.request.query_params.get('user', None)
         phenomenon = self.request.query_params.get('phenomenon', None)
 
@@ -33,6 +35,8 @@ class ObservationList(APIView):
             longitude, latitude = point.split(',')
             point_within = Point(float(longitude), float(latitude))
             observations = MetadataObservation.objects.filter(geometry__distance_lte=(point_within, Distance(m=radius)))
+        elif from_date is not None and to_date is not None:
+            observations = MetadataObservation.objects.filter(send_date__range=(from_date, to_date))
         elif bbox and len(bbox.split(',')) == 4:
             # (xmin, ymin, xmax, ymax)
             observations = MetadataObservation.objects.filter(geometry__intersects=Polygon.from_bbox(bbox.split(',')))
@@ -77,15 +81,26 @@ class UserProfileUpdate(APIView):
         except UserProfile.DoesNotExist:
             raise Http404
 
-    def put(self, request, format=None):
-        instance = self.get_object(request.data.get('user'))
-        instance.user = User.objects.get(pk=request.data.get('user', None))
-        instance.first_name = request.data.get('first_name', None)
-        instance.last_name = request.data.get('last_name', None)
-        instance.education = request.data.get('education', None)
-        instance.gender = request.data.get('gender', None)
-        instance.qualification = request.data.get('qualification', None)
-        instance.age = request.data.get('age', None)
+    def post(self, request, format=None):
+        print('tu')
+        if UserProfile.objects.filter(user=User.objects.get(id=request.data.get('user'))).exists():
+            instance = self.get_object(request.data.get('user'))
+            print(instance)
+            instance.user = User.objects.get(pk=request.data.get('user', None))
+            instance.first_name = request.data.get('first_name', None)
+            instance.last_name = request.data.get('last_name', None)
+            instance.education = request.data.get('education', None)
+            instance.gender = request.data.get('gender', None)
+            instance.qualification = request.data.get('qualification', None)
+            instance.age = request.data.get('age', None)
+        else:
+            instance = UserProfile(user=User.objects.get(pk=request.data.get('user', None)),
+                                   first_name=request.data.get('first_name', None),
+                                   last_name=request.data.get('last_name', None),
+                                   education=request.data.get('education', None),
+                                   gender=request.data.get('gender', None),
+                                   qualification=request.data.get('qualification', None),
+                                   age=request.data.get('age', None))
         instance.save()
 
         serializer = UserProfileSerializer(data=request.data)
@@ -109,7 +124,7 @@ class PhotoList(APIView):
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = PhenomenonPhotoSerializer(data=request.data)
+        serializer = PhenomenonPhotoSerializer(data=request.data, context={'request': request})
         print(request.data)
         if serializer.is_valid():
             serializer.save()

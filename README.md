@@ -25,6 +25,12 @@ Observations from the users
     * **bbox** in format `xmin,ymin,xmax,ymax`
   * E.g.
     `/observations/?bbox=15.2773065,49.0804684,15.4773065,49.1804684`
+* By date
+  * parameters
+    * **from** in format `YYYY-MM-DD`
+    * **to** in format `YYYY-MM-DD`
+  * E.g.
+    `observations/?from=2018-05-22&to=2018-05-23`
 
 ### Pagination
 Pagination by page number and page size
