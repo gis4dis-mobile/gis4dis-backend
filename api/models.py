@@ -110,6 +110,7 @@ class Dictionary(models.Model):
 
     class Meta:
         verbose_name_plural = 'Dictionaries'
+        ordering = ['-pk']
 
     def __str__(self):
         return self.value
@@ -122,6 +123,7 @@ class DictionaryLocalization(models.Model):
 
     class Meta:
         verbose_name_plural = 'Dictionary localizations'
+        ordering = ['-pk']
 
     def __str__(self):
         return self.name
