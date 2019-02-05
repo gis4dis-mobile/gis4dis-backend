@@ -169,7 +169,12 @@ class Config(APIView):
     Represents configuration view which is used for app initialization
     """
     def get(self, request, format=None):
-        structure = Phenomenon.objects.all()
+        category = self.request.query_params.get('category', None)
+
+        if category:
+            structure = Phenomenon.objects.filter(category__name__iexact=category)
+        else:
+            structure = Phenomenon.objects.all()
         serializer = PhenomenonSerializer(structure, many=True)
         return Response(serializer.data)
 

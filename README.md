@@ -4,6 +4,13 @@ List of API endpoints (https://zelda.sci.muni.cz/rest/api/)
 #### /config
 Configuration of the app. Information about phenomenons, parameters and dictionaries. Based on this configuration the app GUI will be created.
 
+###### Filtering
+* By category
+  * parameters
+    * **category**
+  * E.g.
+    `/config/?category=drought`
+
 #### /photos
 All photos gathered with observations
 
@@ -38,3 +45,11 @@ Pagination by page number and page size
   * **page** - number of page
   * **page_size** - number of elements
 * E.g. `/observations/?page=1` or `/observations/?page=1&page_size=10`
+
+### Phenomenons for parsing 
+From config endpoint: [https://zelda.sci.muni.cz/rest/api/config/?category=drought](https://zelda.sci.muni.cz/rest/api/config/?category=drought)
+* Dry vegetation (trees)
+* Absence of mushrooms
+
+
+
