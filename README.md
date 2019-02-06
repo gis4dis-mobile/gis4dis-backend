@@ -38,6 +38,16 @@ Observations from the users
     * **to** in format `YYYY-MM-DD`
   * E.g.
     `observations/?from=2018-05-22&to=2018-05-23`
+* By phenomenon name
+  * parameters
+    * **phenomenon**
+  * E.g.
+    `observations/?phenomenon=Dry vegetation (trees)`
+* By phenomenon id
+  * parameters
+    * **phenomenon_id**
+  * E.g.
+    `observations/?phenomenon=1`
 
 ### Pagination
 Pagination by page number and page size

@@ -21,32 +21,42 @@ from .serializers import MetadataObservationSerializer, MetadataObservationSeria
 #@authentication_classes((TokenAuthentication,))
 #@permission_classes((IsAuthenticated,))
 class ObservationList(APIView):
-    def get(self, request, format=None):
-        radius = self.request.query_params.get('radius', None)
-        point = self.request.query_params.get('point', None)
-        bbox = self.request.query_params.get('bbox', None)
-        from_date = self.request.query_params.get('from', None)
-        to_date = self.request.query_params.get('to', None)
-        user = self.request.query_params.get('user', None)
-        phenomenon = self.request.query_params.get('phenomenon', None)
+    # @authentication_classes((TokenAuthentication,))
+    # @permission_classes((IsAuthenticated,))
+    class ObservationList(APIView):
+        def get(self, request, format=None):
+            radius = self.request.query_params.get('radius', None)
+            point = self.request.query_params.get('point', None)
+            bbox = self.request.query_params.get('bbox', None)
+            from_date = self.request.query_params.get('from', None)
+            to_date = self.request.query_params.get('to', None)
+            user = self.request.query_params.get('user', None)
+            phenomenon = self.request.query_params.get('phenomenon', None)
+            phenomenon_id = self.request.query_params.get('phenomenon_id', None)
 
-        if (radius and point) and len(point.split(',')) == 2:
-            # value in meters
-            longitude, latitude = point.split(',')
-            point_within = Point(float(longitude), float(latitude))
-            observations = MetadataObservation.objects.filter(geometry__distance_lte=(point_within, Distance(m=radius)))
-        elif from_date is not None and to_date is not None:
-            observations = MetadataObservation.objects.filter(send_date__range=(from_date, to_date))
-        elif bbox and len(bbox.split(',')) == 4:
-            # (xmin, ymin, xmax, ymax)
-            observations = MetadataObservation.objects.filter(geometry__intersects=Polygon.from_bbox(bbox.split(',')))
-        else:
-            observations = MetadataObservation.objects.all()
+            if (radius and point) and len(point.split(',')) == 2:
+                # value in meters
+                longitude, latitude = point.split(',')
+                point_within = Point(float(longitude), float(latitude))
+                observations = MetadataObservation.objects.filter(
+                    geometry__distance_lte=(point_within, Distance(m=radius)))
+            elif from_date is not None and to_date is not None:
+                observations = MetadataObservation.objects.filter(send_date__range=(from_date, to_date))
+            elif bbox and len(bbox.split(',')) == 4:
+                # (xmin, ymin, xmax, ymax)
+                observations = MetadataObservation.objects.filter(
+                    geometry__intersects=Polygon.from_bbox(bbox.split(',')))
+            elif phenomenon:
+                observations = MetadataObservation.objects.filter(values__phenomenon__name__iexact=phenomenon)
+            elif phenomenon_id:
+                observations = MetadataObservation.objects.filter(values__phenomenon__id=phenomenon_id)
+            else:
+                observations = MetadataObservation.objects.all()
 
-        paginator = PageNumberPagination()
-        result_page = paginator.paginate_queryset(observations, request)
-        serializer = MetadataObservationSerializer(result_page, many=True)
-        return Response(serializer.data)
+            paginator = PageNumberPagination()
+            result_page = paginator.paginate_queryset(observations, request)
+            serializer = MetadataObservationSerializer(result_page, many=True)
+            return Response(serializer.data)
 
     def post(self, request, format=None):
         serializer = MetadataObservationSerializerId(data=request.data, context={'request': request})
