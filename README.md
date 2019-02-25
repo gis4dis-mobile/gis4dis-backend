@@ -61,5 +61,26 @@ From config endpoint: [https://zelda.sci.muni.cz/rest/api/config/?category=droug
 * Dry vegetation (trees)
 * Absence of mushrooms
 
+## Docker
+You can run docker image of [gis4dis-backend](https://cloud.docker.com/repository/docker/bulva/gis4dis-backend) inside the container with nginx, gunicorn and PostgreSQL database.
+
+You have to add ssl certificate to `./config/nginx/yourdomain.pem` and `./config/nginx/yourdomain.key`. Then you have to rename volumes of nginx service in docker-compose.yml.
+
+Uncomment ssl and listen 443 in `nginx/conf.d/local.conf` file. You can change settings of nginx if you want.
+
+Then you can build and start the app:
+```bash
+docker-compose build
+docker-compose up
+```
+
+After that in other connection (terminal) run this:
+```bash
+docker exec -it gis4dis-docker-backend_database_1 bash
+psql -h localhost -p 5432 -U rest rest < rest_11-02-2019.sql
+```
+
+This will import the dump of the PostgreSQL database. You can check the container is running on `localhost:8000/rest/api/config`. In `docker-compose.yml` you can change port (80 instead of 8000)
+
 
 
