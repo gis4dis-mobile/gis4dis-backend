@@ -47,7 +47,17 @@ Observations from the users
   * parameters
     * **phenomenon_id**
   * E.g.
-    `observations/?phenomenon=1`
+    `observations/?phenomenon_id=1`
+* By category name
+  * parameters
+    * **category**
+  * E.g.
+    `observations/?category=Drought`
+* By category id
+  * parameters
+    * **category_id**
+  * E.g.
+    `observations/?category_id=1`
 
 ### Pagination
 Pagination by page number and page size
