@@ -44,7 +44,7 @@ class ObservationList(APIView):
             # (xmin, ymin, xmax, ymax)
             observations = observations.filter(geometry__intersects=Polygon.from_bbox(bbox.split(',')))
         if from_date and to_date:
-            observations = observations.filter(send_date__gte=from_date,send_date__lt=to_date)
+            observations = observations.filter(send_date__gte=from_date,send_date__lte=to_date)
         if phenomenon:
             observations = observations.filter(values__phenomenon__name__iexact=phenomenon)
         if phenomenon_id:
