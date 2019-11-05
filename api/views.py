@@ -13,6 +13,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import User
 
+from datetime import datetime
+
 from .models import MetadataObservation, Phenomenon, PhenomenonPhoto, UserProfile, Localization, Version
 from .serializers import MetadataObservationSerializer, MetadataObservationSerializerId, PhenomenonSerializer, \
     PhenomenonPhotoSerializer, UserProfileSerializer, VersionSerializer
@@ -44,7 +46,9 @@ class ObservationList(APIView):
             # (xmin, ymin, xmax, ymax)
             observations = observations.filter(geometry__intersects=Polygon.from_bbox(bbox.split(',')))
         if from_date and to_date:
-            observations = observations.filter(send_date__gte=from_date,send_date__lte=to_date)
+            observations = observations.filter(
+                send_date__gte=datetime.strptime(from_date, '%Y-%m-%d'),
+                send_date__lte=datetime.strptime(to_date, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
         if phenomenon:
             observations = observations.filter(values__phenomenon__name__iexact=phenomenon)
         if phenomenon_id:
